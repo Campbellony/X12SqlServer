@@ -67,8 +67,8 @@ BEGIN
 	) ord on e.Id = ord.id;
 	
 	-- load static Segment table
-	INSERT INTO dbo.Segment(BatchId, Ordinal, Tag, E1, E2, E3, E4, E5, E6, E7, E8, E9, E10, E11, E12, E13, E14, E15, E16, E17, E18, E19, E20, E21, E22, E23, E24, E25, E26, E27, E28, E29, E30, E31) 
-	SELECT @batchId, SegmentId, PivotTable.[0], PivotTable.[1], PivotTable.[2], PivotTable.[3], PivotTable.[4], PivotTable.[5], PivotTable.[6], PivotTable.[7], PivotTable.[8], PivotTable.[9], PivotTable.[10], PivotTable.[11], PivotTable.[12], PivotTable.[13], PivotTable.[14], PivotTable.[15], PivotTable.[16], PivotTable.[17], PivotTable.[18], PivotTable.[19], PivotTable.[20], PivotTable.[21], PivotTable.[22], PivotTable.[23], PivotTable.[24], PivotTable.[25], PivotTable.[26], PivotTable.[27], PivotTable.[28], PivotTable.[29], PivotTable.[30], PivotTable.[31]
+	INSERT INTO dbo.Segment(BatchId, Ordinal, Tag, E1, E2, E3, E4, E5, E6, E7, E8, E9, E10, E11, E12, E13, E14, E15, E16, E17, E18, E19, E20, E21, E22, E23, E24) 
+	SELECT @batchId, SegmentId, PivotTable.[0], PivotTable.[1], PivotTable.[2], PivotTable.[3], PivotTable.[4], PivotTable.[5], PivotTable.[6], PivotTable.[7], PivotTable.[8], PivotTable.[9], PivotTable.[10], PivotTable.[11], PivotTable.[12], PivotTable.[13], PivotTable.[14], PivotTable.[15], PivotTable.[16], PivotTable.[17], PivotTable.[18], PivotTable.[19], PivotTable.[20], PivotTable.[21], PivotTable.[22], PivotTable.[23], PivotTable.[24]
 	FROM 
 	(
 		SELECT SegmentId, Ordinal, ElementValue 
@@ -77,7 +77,7 @@ BEGIN
 	PIVOT 
 	(
 		MAX(ElementValue)
-		FOR Ordinal IN ([0], [1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12], [13], [14], [15], [16], [17], [18], [19], [20], [21], [22], [23], [24], [25], [26], [27], [28], [29], [30], [31])
+		FOR Ordinal IN ([0], [1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12], [13], [14], [15], [16], [17], [18], [19], [20], [21], [22], [23], [24])
 	) [PivotTable]
 	WHERE PivotTable.[0] <> '';
 
