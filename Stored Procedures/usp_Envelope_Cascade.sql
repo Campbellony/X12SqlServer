@@ -10,22 +10,33 @@ CREATE PROCEDURE [dbo].[usp_Envelope_Cascade]
 	@batchId INT
 AS
 BEGIN
-	WITH CTE
-	AS
-	(
-	SELECT subordiate.Id, s2.EnvelopeId
-	FROM dbo.Segment subordiate
-	OUTER APPLY (SELECT MAX(Ordinal) LastOrd
-				FROM dbo.Segment parent
-				WHERE parent.Ordinal < subordiate.Ordinal
-					AND subordiate.BatchId = parent.BatchId AND parent.EnvelopeId IS NOT NULL) oa
-	JOIN dbo.Segment s2 ON oa.LastOrd = s2.Ordinal and s2.BatchId = @batchId 
-	WHERE subordiate.BatchId = @batchId AND subordiate.EnvelopeId IS NULL
-	)
+	
+	DROP TABLE IF EXISTS #assigned;
+	CREATE TABLE #assigned(Ordinal decimal(10,3), EnvelopeId int, RowNum int);
+
+	CREATE NONCLUSTERED INDEX IX_TempAssigned_RowNum ON #assigned ([RowNum])
+	INCLUDE ([Ordinal],[EnvelopeId]);
+
+	-- get all segments assigned an envelope
+	INSERT INTO #assigned(Ordinal, EnvelopeId, RowNum)
+	SELECT Ordinal, EnvelopeId, ROW_NUMBER() OVER(ORDER BY Ordinal) RowNum
+	FROM dbo.Segment
+	WHERE BatchId = @batchId
+	and EnvelopeId IS NOT NULL;
+
+	-- get the ordinal for the next segment with an envelope assigned
+	DROP TABLE IF EXISTS #boundry;
+	SELECT a.Ordinal, a.EnvelopeId, b.Ordinal [UpperBound]
+	INTO #boundry
+	FROM #assigned a
+	JOIN #assigned b on a.RowNum = b.RowNum - 1
+
+	-- set the envelope for segments without an envelope assigned
 	UPDATE s
-	SET EnvelopeId = c.EnvelopeId
+	SET EnvelopeId = b.EnvelopeId
 	FROM dbo.Segment s
-	JOIN CTE c on s.Id = c.Id;
+	JOIN #boundry b ON s.Ordinal between b.Ordinal and b.UpperBound
+	WHERE s.BatchId = @batchId and s.EnvelopeId is null;
 
 	RETURN 0
 END

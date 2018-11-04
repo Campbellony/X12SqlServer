@@ -31,55 +31,93 @@ BEGIN
 		SET @newLine = @newLine + SUBSTRING(@payload, 108, 1); 
 	END
 
+	-- remove new line characters
+	IF (LEN(@newLine) > 0)
+	BEGIN
+		SET @payload = REPLACE(@payload, @newLine, '');
+	END;
+
 	-- create batch
 	INSERT INTO dbo.Batch(Payload, ElementDelimiter, SegmentDelimiter, NewLineCharacters, Metadata) 
 	VALUES(@payload, @elementDelimiter, @segmentDelimiter, @newLine, @metadata);
 	SET @batchId = SCOPE_IDENTITY();
 	
-	-- create table variable to store segments (1 segment per row) with an auto-incrementing key for ordinal
-	DECLARE @segments table(Id int identity(1,1), AllElements VARCHAR(255))
-	IF (LEN(@newLine) > 0)
-	BEGIN
-		INSERT INTO @segments(AllElements)
-		SELECT REPLACE(value, @newLine, '') AllElements
-		FROM string_split(@payload,@segmentDelimiter)
-	END ELSE 
-	BEGIN
-		INSERT INTO @segments(AllElements)
-		SELECT value 
-		FROM string_split(@payload,@segmentDelimiter);
-	END
+	-- create table variable to store elements
+	DECLARE @elements TABLE(
+		Ordinal INT NOT NULL,
+		Tag VARCHAR(3) NOT NULL,
+		E1 VARCHAR(264) NULL,
+		E2 VARCHAR(193) NULL,
+		E3 VARCHAR(256) NULL,
+		E4 VARCHAR(264) NULL,
+		E5 VARCHAR(80) NULL,
+		E6 VARCHAR(256) NULL,
+		E7 VARCHAR(80) NULL,
+		E8 VARCHAR(256) NULL,
+		E9 VARCHAR(80) NULL,
+		E10 VARCHAR(80) NULL,
+		E11 VARCHAR(80) NULL,
+		E12 VARCHAR(264) NULL,
+		E13 VARCHAR(113) NULL,
+		E14 VARCHAR(18) NULL,
+		E15 VARCHAR(35) NULL,
+		E16 VARCHAR(35) NULL,
+		E17 VARCHAR(18) NULL,
+		E18 VARCHAR(18) NULL,
+		E19 VARCHAR(18) NULL,
+		E20 VARCHAR(50) NULL,
+		E21 VARCHAR(50) NULL,
+		E22 VARCHAR(50) NULL,
+		E23 VARCHAR(50) NULL,
+		E24 VARCHAR(18) NULL);
 
-	-- create table variable to store elements with an auto-incrementing key 
-	DECLARE @elements table(Id INT IDENTITY(0,1), SegmentId INT, ElementValue VARCHAR(255), Ordinal INT)
+	DECLARE 
+		@currentRow INT, 
+		@startSegment INT,
+		@endSegment INT,
+		@allElements VARCHAR(1000),
+		@totalElements INT;
 
-	INSERT INTO @elements(SegmentId, ElementValue)
-	select s.Id, ae.value
-	from @segments s
-	CROSS APPLY string_split(AllElements, @elementDelimiter) ae;
-
-	UPDATE e
-		SET Ordinal = ElementOrdinal - 1
-	FROM @elements e
-	JOIN (
-	SELECT Id, ROW_NUMBER() OVER (PARTITION BY SegmentId ORDER BY Id) ElementOrdinal
-	FROM @elements
-	) ord on e.Id = ord.id;
+	SET @currentRow = 1;
+	SET @startSegment = 1;
+	SET @endSegment = CHARINDEX(@segmentDelimiter, @payload, 1);
 	
-	-- load static Segment table
-	INSERT INTO dbo.Segment(BatchId, Ordinal, Tag, E1, E2, E3, E4, E5, E6, E7, E8, E9, E10, E11, E12, E13, E14, E15, E16, E17, E18, E19, E20, E21, E22, E23, E24) 
-	SELECT @batchId, SegmentId, PivotTable.[0], PivotTable.[1], PivotTable.[2], PivotTable.[3], PivotTable.[4], PivotTable.[5], PivotTable.[6], PivotTable.[7], PivotTable.[8], PivotTable.[9], PivotTable.[10], PivotTable.[11], PivotTable.[12], PivotTable.[13], PivotTable.[14], PivotTable.[15], PivotTable.[16], PivotTable.[17], PivotTable.[18], PivotTable.[19], PivotTable.[20], PivotTable.[21], PivotTable.[22], PivotTable.[23], PivotTable.[24]
-	FROM 
-	(
-		SELECT SegmentId, Ordinal, ElementValue 
-		FROM @elements
-	) [SourceTable]
-	PIVOT 
-	(
-		MAX(ElementValue)
-		FOR Ordinal IN ([0], [1], [2], [3], [4], [5], [6], [7], [8], [9], [10], [11], [12], [13], [14], [15], [16], [17], [18], [19], [20], [21], [22], [23], [24])
-	) [PivotTable]
-	WHERE PivotTable.[0] <> '';
+	WHILE (@endSegment > 0)
+	BEGIN
+		
+		-- get segment data
+		SELECT @allElements = SUBSTRING(@payload, @startSegment, @endSegment - @startSegment);
+		
+		-- get count of elements in segment
+		SET @totalElements = LEN(@allElements) - LEN(REPLACE(@allElements, @elementDelimiter, ''));
+		
+		-- escape single quote
+		SET @allElements = REPLACE(@allElements, '''','''''');
+		SET @allElements = REPLACE(@allElements,@elementDelimiter,''',''');
+
+		-- convert concatonated elements into select statement
+		DECLARE @SelectStatement varchar(max) = CONCAT('SELECT ', @currentRow,',''',@allElements,'''');
+		
+		-- pad to max elements to simplify insert into temp table
+		SET @SelectStatement = @SelectStatement + REPLICATE(',NULL',24-@totalElements);
+
+		-- add data to table variable buffer
+		insert into @elements
+		EXEC (@SelectStatement);
+
+		-- increment counters
+		SET @currentRow = @currentRow + 1;
+		SET @startSegment = @endSegment + 1;
+		SET @endSegment = CHARINDEX(@segmentDelimiter, @payload, @startSegment);
+	END;
+		-- JUST FOR TRACING
+		--INSERT INTO dbo.Batch(Payload,ElementDelimiter,SegmentDelimiter,NewLineCharacters,Metadata)
+		--VALUES ('','','','',CONCAT('<Stamp>' , GETDATE() , '</Stamp>'));
+		
+		-- insert into static table
+		INSERT INTO dbo.Segment(BatchId, Ordinal, Tag, E1, E2, E3, E4, E5, E6, E7, E8, E9, E10, E11, E12, E13, E14, E15, E16, E17, E18, E19, E20, E21, E22, E23, E24)
+		SELECT                 @batchId, Ordinal, Tag, E1, E2, E3, E4, E5, E6, E7, E8, E9, E10, E11, E12, E13, E14, E15, E16, E17, E18, E19, E20, E21, E22, E23, E24
+		FROM @elements;
 
 	-- Update envelope ids
 	EXEC dbo.usp_Envelope_CreateMain @batchId;

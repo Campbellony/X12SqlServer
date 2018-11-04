@@ -2,7 +2,7 @@
 (
 	[Id] INT NOT NULL IDENTITY(1,1),
 	[BatchId] INT NOT NULL,
-	[Ordinal] DECIMAL(9,3) NOT NULL,
+	[Ordinal] DECIMAL(10,3) NOT NULL,
 	[EnvelopeId] INT NULL,
 	[IsFooter] BIT NULL,
 	[Tag] VARCHAR(3) NOT NULL,
@@ -36,7 +36,8 @@
 )
 
 GO
-CREATE INDEX [IX_Segment_BatchIdTag] ON [dbo].[Segment] (BatchId) INCLUDE (Tag, Ordinal, EnvelopeId, E1, E2, E3, E4, E5, E6, E7, E8, E9, E10, E11, E12, E13, E14, E15, E16, E17, E18, E19, E20, E21, E22, E23, E24);
+CREATE INDEX [IX_Segment_BatchId] ON [dbo].[Segment] (BatchId) INCLUDE (Tag, Ordinal, EnvelopeId, E1, E2, E3, E4, E5, E6, E7, E8, E9, E10, E11, E12, E13, E14, E15, E16, E17, E18, E19, E20, E21, E22, E23, E24);
 
 GO
-CREATE INDEX [IX_Segment_Envelope] ON [dbo].[Segment] (EnvelopeId);
+CREATE INDEX [IX_Segment_BatchEnvelope] ON [dbo].[Segment] (BatchId, EnvelopeId) INCLUDE (Ordinal);
+
