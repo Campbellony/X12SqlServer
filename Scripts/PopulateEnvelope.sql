@@ -39,7 +39,13 @@ AS
 	SELECT 25,23,'2320','5010 834 Coordination of Benefits Loop' UNION ALL
 	SELECT 26,25,'2330','5010 834 Coordination of Benefits Related Entity Loop' UNION ALL
 	SELECT 27,13,'2700','5010 834 Member Reporting Categories Loop' UNION ALL
-	SELECT 28,27,'2750','5010 834 Reporting Category Loop'
+	SELECT 28,27,'2750','5010 834 Reporting Category Loop' UNION ALL
+	SELECT 29, 3, 'Heading', '4010 846 Heading' UNION ALL
+	SELECT 30, 3, 'Dealer', '4010 846 Dealer' UNION ALL
+	SELECT 31, 3, 'Store', '4010 846 Store' UNION ALL
+	SELECT 32, 3, 'Line', '4010 846 Line' UNION ALL
+	SELECT 33, 3, 'Quantity', '4010 846 Quantity' UNION ALL
+	SELECT 34, 3, 'Trailer', '4010 846 Trailer' 
 ) 
 MERGE dbo.Envelope AS target
 USING CTE_Buffer AS source

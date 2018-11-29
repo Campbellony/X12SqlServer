@@ -44,7 +44,7 @@ BEGIN
 	
 	-- create table variable to store elements
 	DECLARE @elements TABLE(
-		Ordinal INT NOT NULL,
+		Ordinal DECIMAL(10,3) NOT NULL,
 		Tag VARCHAR(3) NOT NULL,
 		E1 VARCHAR(264) NULL,
 		E2 VARCHAR(193) NULL,

@@ -8,11 +8,11 @@ CREATE FUNCTION udf_GetVersion
 (
 	@batchId int
 )
-RETURNS VARCHAR(20)
+RETURNS VARCHAR(256)
 AS
 BEGIN
 	-- Declare the return variable here
-	DECLARE @version VARCHAR(20);
+	DECLARE @version VARCHAR(256);
 
 	-- Add the T-SQL statements to compute the return value here
 	SELECT @version = E8

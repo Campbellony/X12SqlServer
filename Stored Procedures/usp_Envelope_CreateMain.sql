@@ -27,7 +27,7 @@ BEGIN
 					END
 	WHERE BatchId = @batchId;
 
-	DECLARE @version VARCHAR(20);
+	DECLARE @version VARCHAR(256);
 	SET @version = dbo.udf_GetVersion(@batchId);
 
 	PRINT CONCAT('Version: ', ISNULL(@version,'not found'));
@@ -42,7 +42,11 @@ BEGIN
 		PRINT 'Creating envelopes for 5010 claim payment.'; 
 		EXEC usp_Envelope_Create5010ClaimPayment @batchId;
 	END
-
+	ELSE IF (@version = '004010VICS')
+	BEGIN
+		PRINT 'Creating envelopes for 4010 inventory inquiry';
+		EXEC usp_Envelope_Create4010Inventory @batchId;
+	END
 
 	RETURN 0
 END

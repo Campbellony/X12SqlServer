@@ -46,6 +46,7 @@
     <DefineTrace>true</DefineTrace>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <RunSqlCodeAnalysis>True</RunSqlCodeAnalysis>
   </PropertyGroup>
   <PropertyGroup>
     <VisualStudioVersion Condition="'$(VisualStudioVersion)' == ''">11.0</VisualStudioVersion>
@@ -76,6 +77,7 @@
     <Build Include="Stored Procedures\usp_Envelope_Cascade.sql" />
     <Build Include="Stored Procedures\usp_Envelope_Hierarchy.sql" />
     <Build Include="Stored Procedures\usp_Test.sql" />
+    <Build Include="Stored Procedures\usp_Envelope_Create4010Inventory.sql" />
   </ItemGroup>
   <ItemGroup>
     <None Include="X12SqlServer.publish.xml" />

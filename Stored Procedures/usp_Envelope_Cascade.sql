@@ -12,7 +12,7 @@ AS
 BEGIN
 	
 	DROP TABLE IF EXISTS #assigned;
-	CREATE TABLE #assigned(Ordinal decimal(10,3), EnvelopeId int, RowNum int);
+	CREATE TABLE #assigned(Ordinal decimal(10,3), EnvelopeId int, RowNum bigint);
 
 	CREATE NONCLUSTERED INDEX IX_TempAssigned_RowNum ON #assigned ([RowNum])
 	INCLUDE ([Ordinal],[EnvelopeId]);
